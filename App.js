@@ -2,7 +2,7 @@ import React from "react";
 import { createAppContainer } from "react-navigation";
 import { createBottomTabNavigator } from "react-navigation-tabs";
 
-import WelcomeScreen from "./screens/Onboarding";
+import WelcomeScreen from "./screens/WelcomeScreen";
 import HomeScreen from "./screens/Home";
 import ProfileScreen from "./screens/Profile";
 import LoginScreen from "./screens/LoginScreen";
