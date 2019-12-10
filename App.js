@@ -11,10 +11,18 @@ import SignUpScreen from "./screens/SignUpScreen";
 const MainNavigator = createBottomTabNavigator({
   welcome: { screen: WelcomeScreen },
   auth: {
-    screen: createBottomTabNavigator({
-      login: { screen: LoginScreen },
-      signup: { screen: SignUpScreen }
-    })
+    screen: createBottomTabNavigator(
+      {
+        login: { screen: LoginScreen },
+        signup: { screen: SignUpScreen }
+      },
+      {
+        defaultNavigationOptions: {
+          tabBarVisible: false
+        },
+        lazy: true
+      }
+    )
   },
   main: {
     screen: createBottomTabNavigator({
