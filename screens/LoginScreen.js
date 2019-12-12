@@ -5,58 +5,123 @@ import {
   View,
   TextInput,
   TouchableHighlight,
-  Image
+  Image,
+  ActivityIndicator,
+  AsyncStorage,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform
 } from "react-native";
+import axios from "axios";
 
 export class LoginScreen extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      email: "",
+      password: "",
+      loading: false,
+      errMessage: null
+    };
+  }
+
+  onLogin = e => {
+    e.preventDefault();
+    const { email, password, errMessage } = this.state;
+    if (email.length < 5) {
+      this.setState({
+        errMessage: "email field cannot be empty"
+      });
+    }
+    if (password.length < 6) {
+      this.setState({
+        errMessage: "password must be atleast 6 characters"
+      });
+    }
+    if (errMessage === null) {
+      this.setState({ loading: true });
+      axios
+        .post("https://chattel.herokuapp.com/api/v1/login", {
+          email,
+          password
+        })
+        .then(res => {
+          this.setState({ loading: false });
+          if (res.status === 200) {
+            console.log(res.data.data.token);
+            AsyncStorage.setItem("token", res.data.data.token);
+            this.props.navigation.navigate("main");
+          }
+        })
+        .catch(error => {
+          console.log(error);
+          this.setState({ loading: false });
+        });
+    }
+  };
+
   render() {
+    const { loading, errMessage } = this.state;
+    const keyboardVerticalOffset = Platform.OS === "ios" ? 40 : 0;
     return (
-      <View style={styles.container}>
-        <Text style={styles.headerText}>Chattel</Text>
+      <KeyboardAvoidingView
+        behavior="position"
+        keyboardVerticalOffset={keyboardVerticalOffset}
+      >
+        <ScrollView>
+          <View style={styles.container}>
+            <Text style={styles.headerText}>Chattel</Text>
 
-        <Image
-          style={styles.image}
-          source={require("../assets/slide1.png")}
-          alt="bg_img"
-        />
-        <Text style={styles.subText}>Register</Text>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputs}
-            placeholder="Email"
-            keyboardType="email-address"
-            onChangeText={email => this.setState({ email })}
-          />
-        </View>
+            <Image
+              style={styles.image}
+              source={require("../assets/slide1.png")}
+              alt="bg_img"
+            />
+            <Text>{errMessage}</Text>
+            <Text style={styles.subText}>LOGIN</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputs}
+                placeholder="Email"
+                keyboardType="email-address"
+                onChangeText={email => this.setState({ email })}
+              />
+            </View>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.inputs}
-            placeholder="Password"
-            secureTextEntry={true}
-            onChangeText={password => this.setState({ password })}
-          />
-        </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputs}
+                placeholder="Password"
+                secureTextEntry={true}
+                onChangeText={password => this.setState({ password })}
+              />
+            </View>
 
-        <TouchableHighlight
-          style={[styles.buttonContainer, styles.loginButton]}
-          onPress={() => this.onClickListener("login")}
-        >
-          <Text style={styles.loginText}>Login</Text>
-        </TouchableHighlight>
+            <TouchableHighlight
+              style={[styles.buttonContainer, styles.loginButton]}
+              onPress={this.onLogin}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.loginText}>Login</Text>
+              )}
+            </TouchableHighlight>
 
-        <TouchableHighlight
-          style={styles.buttonContainer}
-          onPress={() => this.props.navigation.navigate("signup")}
-        >
-          <Text style={{ textAlign: "center" }}>
-            Don't have an account?
-            <Text style={{ textAlign: "center", color: "blue" }}>
-              Register instead
-            </Text>
-          </Text>
-        </TouchableHighlight>
-      </View>
+            <TouchableHighlight
+              style={styles.buttonContainer}
+              onPress={() => this.props.navigation.navigate("signup")}
+            >
+              <Text style={{ textAlign: "center" }}>
+                Don't have an account?
+                <Text style={{ textAlign: "center", color: "blue" }}>
+                  Register instead
+                </Text>
+              </Text>
+            </TouchableHighlight>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 }

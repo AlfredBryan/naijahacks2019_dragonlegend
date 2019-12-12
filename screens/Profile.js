@@ -5,8 +5,11 @@ import {
   ScrollView,
   Image,
   ImageBackground,
-  Platform
+  Platform,
+  AsyncStorage,
+  Button
 } from "react-native";
+import axios from "axios";
 import { Block, Text, theme } from "galio-framework";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -17,33 +20,93 @@ import { HeaderHeight } from "../constants/utils";
 const { width, height } = Dimensions.get("screen");
 const thumbMeasure = (width - 48 - 32) / 3;
 
+const token = AsyncStorage.getItem("token");
+
 export default class Profile extends React.Component {
+  state = {
+    profile: "",
+    properties: []
+  };
+  static navigationOptions = {
+    title: "PROFILE",
+    tabBarIcon: () => {
+      return (
+        <Image
+          source={require("../assets/profileicon.png")}
+          style={{ width: 26, height: 26, borderRadius: 20 }}
+        />
+      );
+    }
+  };
+
+  componentDidMount() {
+    this.viewProfile();
+    this.viewProperties();
+  }
+  viewProfile = () => {
+    axios
+      .get("https://chattel.herokuapp.com/api/v1/profile", {
+        headers: {
+          token: token._55
+        }
+      })
+      .then(res => {
+        if (res.status === 200) {
+          this.setState({ profile: res.data.data.profile });
+        }
+      })
+      .then(error => {
+        console.log(error);
+      });
+  };
+
+  viewProperties = () => {
+    axios
+      .get("https://chattel.herokuapp.com/api/v1/properties", {
+        headers: {
+          token: token._55
+        }
+      })
+      .then(res => {
+        this.setState({ properties: res.data.data.properties });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  };
+
+  logOut = () => {
+    AsyncStorage.clear("token");
+    this.props.navigation.navigate("login");
+  };
+
   render() {
+    const { profile, properties } = this.state;
     return (
       <Block flex style={styles.profile}>
         <Block flex>
           <ImageBackground
-            source={{ uri: Images.Profile }}
+            source={require("../assets/pimg.png")}
             style={styles.profileContainer}
             imageStyle={styles.profileImage}
           >
             <Block flex style={styles.profileDetails}>
               <Block style={styles.profileTexts}>
-                <Text color="white" size={28} style={{ paddingBottom: 8 }}>
-                  Rachel Brown
+                <Text color="black" size={28} style={{ paddingBottom: 8 }}>
+                  {profile.fname} {profile.lname}
                 </Text>
                 <Block row space="between">
                   <Block row>
                     <Block middle style={styles.pro}>
                       <Text size={16} color="white">
-                        Pro
+                        Typ
                       </Text>
                     </Block>
-                    <Text color="white" size={16} muted style={styles.seller}>
-                      Seller
+                    <Text color="black" size={16} muted style={styles.seller}>
+                      {profile.type}
                     </Text>
                     <Text size={16} color={materialTheme.COLORS.WARNING}>
-                      4.8 <Icon name="shape-star" size={14} />
+                      Mobile
                     </Text>
                   </Block>
                   <Block>
@@ -53,7 +116,7 @@ export default class Profile extends React.Component {
                         color={theme.COLORS.MUTED}
                         size={16}
                       />
-                      {` `} Los Angeles, CA
+                      {profile.mobile}
                     </Text>
                   </Block>
                 </Block>
@@ -69,28 +132,36 @@ export default class Profile extends React.Component {
           <ScrollView showsVerticalScrollIndicator={false}>
             <Block row space="between" style={{ padding: theme.SIZES.BASE }}>
               <Block middle>
-                <Text bold size={12} style={{ marginBottom: 8 }}>
-                  36
-                </Text>
-                <Text muted size={12}>
-                  Orders
-                </Text>
+                <Button
+                  buttonStyle={{
+                    borderRadius: 0,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    marginBottom: 0
+                  }}
+                  onPress={() => this.props.navigation.navigate("add_property")}
+                  title="ADD PROPERTY"
+                />
               </Block>
               <Block middle>
                 <Text bold size={12} style={{ marginBottom: 8 }}>
-                  5
+                  {properties.length}
                 </Text>
                 <Text muted size={12}>
-                  Bids & Offers
+                  Properties
                 </Text>
               </Block>
               <Block middle>
-                <Text bold size={12} style={{ marginBottom: 8 }}>
-                  2
-                </Text>
-                <Text muted size={12}>
-                  Messages
-                </Text>
+                <Button
+                  buttonStyle={{
+                    borderRadius: 0,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    marginBottom: 0
+                  }}
+                  onPress={this.logOut}
+                  title="LogOut"
+                />
               </Block>
             </Block>
             <Block
@@ -98,22 +169,22 @@ export default class Profile extends React.Component {
               space="between"
               style={{ paddingVertical: 16, alignItems: "baseline" }}
             >
-              <Text size={16}>Recently viewed</Text>
+              <Text size={16}>Properties</Text>
               <Text
                 size={12}
                 color={theme.COLORS.PRIMARY}
-                onPress={() => this.props.navigation.navigate("Home")}
+                onPress={() => this.props.navigation.navigate("home")}
               >
                 View All
               </Text>
             </Block>
             <Block style={{ paddingBottom: -HeaderHeight * 2 }}>
               <Block row space="between" style={{ flexWrap: "wrap" }}>
-                {Images.Viewed.map((img, imgIndex) => (
+                {properties.map((img, imgIndex) => (
                   <Image
-                    source={{ uri: img }}
-                    key={`viewed-${img}`}
+                    source={require("../assets/pimage.png")}
                     resizeMode="cover"
+                    key={img.id}
                     style={styles.thumb}
                   />
                 ))}

@@ -1,16 +1,6 @@
 import React, { Component } from "react";
-import {
-  ImageBackground,
-  StyleSheet,
-  StatusBar,
-  Dimensions,
-  Platform,
-  View,
-  Image,
-  Text,
-  Alert,
-  Button
-} from "react-native";
+import _ from "lodash";
+import { StyleSheet, Dimensions, View, Text, AsyncStorage } from "react-native";
 import AppIntroSlider from "react-native-app-intro-slider";
 
 const { height, width } = Dimensions.get("screen");
@@ -75,12 +65,15 @@ const slides = [
 ];
 
 export default class WelcomeScreen extends Component {
+  state = {
+    token: null
+  };
   on_Done_all_slides = () => {
-    this.props.navigation.navigate("signup");
+    this.props.navigation.navigate("login");
   };
 
   on_Skip_slides = () => {
-    this.props.navigation.navigate("signup");
+    this.props.navigation.navigate("login");
   };
 
   onSkip = () => {
@@ -88,7 +81,7 @@ export default class WelcomeScreen extends Component {
       <View>
         <Text
           style={{ color: "black", marginTop: 10, textAlign: "center" }}
-          onPress={() => this.props.navigation.navigate("signup")}
+          onPress={() => this.props.navigation.navigate("login")}
         >
           Skip
         </Text>
@@ -96,7 +89,21 @@ export default class WelcomeScreen extends Component {
     );
   };
 
+  async componentWillMount() {
+    let token = await AsyncStorage.getItem("token");
+    if (token) {
+      this.props.navigation.navigate("main");
+      this.setState({ token });
+    } else {
+      this.setState({ token: false });
+    }
+  }
+
   render() {
+    // const token = AsyncStorage.getItem("token");
+    // if (token) {
+    //   this.props.navigation.navigate("main");
+    // }
     return (
       <AppIntroSlider
         slides={slides}

@@ -8,36 +8,110 @@ import {
   KeyboardAvoidingView,
   Picker,
   Image,
-  ScrollView
+  ScrollView,
+  ActivityIndicator,
+  AsyncStorage,
+  Platform
 } from "react-native";
+import axios from "axios";
 
 export class SignUpScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      gender: "",
-      type: ""
+      fname: "",
+      lname: "",
+      email: "",
+      password: "",
+      mobile: "",
+      gender: "male",
+      type: "property owner",
+      loading: false,
+      errMessage: null
     };
   }
+
+  onSignUp = e => {
+    e.preventDefault();
+    const {
+      fname,
+      lname,
+      email,
+      password,
+      mobile,
+      gender,
+      type,
+      errMessage
+    } = this.state;
+    if (fname.length < 3) {
+      this.setState({ errMessage: "please enter first name" });
+    }
+    if (lname.length < 3) {
+      this.setState({ errMessage: "please enter last name" });
+    }
+    if (email.length < 5) {
+      this.setState({
+        errMessage: "email field cannot be empty"
+      });
+    }
+    if (password.length < 6) {
+      this.setState({
+        errMessage: "password must be atleast 6 characters"
+      });
+    }
+    if (mobile.length < 10) {
+      this.setState({
+        errMessage: "please enter phone number"
+      });
+    }
+    if (errMessage === null) {
+      this.setState({ loading: true });
+      axios
+        .post("https://chattel.herokuapp.com/api/v1/register", {
+          fname,
+          lname,
+          email,
+          password,
+          mobile,
+          gender,
+          type
+        })
+        .then(res => {
+          this.setState({ loading: false });
+          if (res.status === 201) {
+            AsyncStorage.setItem("token", res.data.data.token);
+            this.props.navigation.navigate("main");
+          }
+        })
+        .catch(error => {
+          this.setState({ loading: false });
+        });
+    }
+  };
+
   render() {
-    const { gender, type } = this.state;
+    const { gender, type, loading, errMessage } = this.state;
+    const keyboardVerticalOffset = Platform.OS === "ios" ? 40 : 0;
+
     return (
-      <KeyboardAvoidingView>
+      <KeyboardAvoidingView
+        behavior="position"
+        keyboardVerticalOffset={keyboardVerticalOffset}
+      >
         <ScrollView>
           <View style={styles.container}>
             <Text style={styles.headerText}>Chattel</Text>
-
             <Image
               style={styles.image}
               source={require("../assets/slide1.png")}
               alt="bg_img"
             />
-            <Text style={styles.subText}>Register</Text>
+            <Text style={{ color: "red" }}>{errMessage}</Text>
+            <Text style={styles.subText}>SIGN UP</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.inputs}
                 placeholder="First Name"
-                keyboardType="fname"
                 onChangeText={fname => this.setState({ fname })}
               />
             </View>
@@ -47,6 +121,14 @@ export class SignUpScreen extends Component {
                 style={styles.inputs}
                 placeholder="Last Name"
                 onChangeText={lname => this.setState({ lname })}
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputs}
+                placeholder="Email"
+                keyboardType="email-address"
+                onChangeText={email => this.setState({ email })}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -69,11 +151,17 @@ export class SignUpScreen extends Component {
                   this.setState({ type: itemValue })
                 }
               >
-                <Picker.Item label="Tenant" value="tenant" />
-                <Picker.Item label="Vendor" value="vendor" />
+                <Picker.Item label="Property Owner" value="property owner" />
               </Picker>
             </View>
-
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.inputs}
+                placeholder="Mobile Number"
+                keyboardType="phone-pad"
+                onChangeText={mobile => this.setState({ mobile })}
+              />
+            </View>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.inputs}
@@ -85,9 +173,13 @@ export class SignUpScreen extends Component {
 
             <TouchableHighlight
               style={[styles.buttonContainer, styles.loginButton]}
-              onPress={() => this.onClickListener("login")}
+              onPress={this.onSignUp}
             >
-              <Text style={styles.loginText}>Register</Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.loginText}>Register</Text>
+              )}
             </TouchableHighlight>
 
             <TouchableHighlight
@@ -165,6 +257,9 @@ const styles = StyleSheet.create({
     height: 250,
     resizeMode: "contain",
     marginTop: 35
+  },
+  spinnerTextStyle: {
+    color: "#FFF"
   }
 });
 

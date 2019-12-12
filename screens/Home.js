@@ -1,123 +1,146 @@
-import React from 'react';
-import { StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { Button, Block, Text, Input, theme } from 'galio-framework';
+import React from "react";
+import {
+  StyleSheet,
+  ScrollView,
+  Image,
+  View,
+  Text,
+  AsyncStorage,
+  TouchableOpacity
+} from "react-native";
+import axios from "axios";
+import { Card, ListItem, Button, Icon } from "react-native-elements";
 
-import { Icon, Product } from '../components/';
-
-const { width } = Dimensions.get('screen');
-import products from '../constants/products';
+const token = AsyncStorage.getItem("token");
 
 export default class Home extends React.Component {
-  renderSearch = () => {
-    const { navigation } = this.props;
-    const iconCamera = <Icon size={16} color={theme.COLORS.MUTED} name="zoom-in" family="material" />
+  state = {
+    properties: []
+  };
+  static navigationOptions = {
+    title: "HOME",
+    tabBarIcon: () => {
+      return (
+        <Image
+          source={require("../assets/homeicon.jpg")}
+          style={{ width: 26, height: 26, borderRadius: 20 }}
+        />
+      );
+    }
+  };
 
-    return (
-      <Input
-        right
-        color="black"
-        style={styles.search}
-        iconContent={iconCamera}
-        placeholder="What are you looking for?"
-        onFocus={() => navigation.navigate('Pro')}
-      />
-    )
-  }
-  
-  renderTabs = () => {
-    const { navigation } = this.props;
-
-    return (
-      <Block row style={styles.tabs}>
-        <Button shadowless style={[styles.tab, styles.divider]} onPress={() => navigation.navigate('Pro')}>
-          <Block row middle>
-            <Icon name="grid" family="feather" style={{ paddingRight: 8 }} />
-            <Text size={16} style={styles.tabTitle}>Categories</Text>
-          </Block>
-        </Button>
-        <Button shadowless style={styles.tab} onPress={() => navigation.navigate('Pro')}>
-          <Block row middle>
-            <Icon size={16} name="camera-18" family="GalioExtra" style={{ paddingRight: 8 }} />
-            <Text size={16} style={styles.tabTitle}>Best Deals</Text>
-          </Block>
-        </Button>
-      </Block>
-    )
-  }
-
-  renderProducts = () => {
-    return (
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.products}>
-        <Block flex>
-          <Product product={products[0]} horizontal />
-          <Block flex row>
-            <Product product={products[1]} style={{ marginRight: theme.SIZES.BASE }} />
-            <Product product={products[2]} />
-          </Block>
-          <Product product={products[3]} horizontal />
-          <Product product={products[4]} full />
-        </Block>
-      </ScrollView>
-    )
+  componentDidMount() {
+    axios
+      .get("https://chattel.herokuapp.com/api/v1/properties", {
+        headers: {
+          token: token._55
+        }
+      })
+      .then(res => {
+        this.setState({ properties: res.data.data.properties });
+      })
+      .catch(error => {
+        console.log(error);
+      });
   }
 
   render() {
+    const { properties } = this.state;
     return (
-      <Block flex center style={styles.home}>
-        {this.renderProducts()}
-      </Block>
+      <ScrollView>
+        <View style={styles.container}>
+          {properties.length < 1 ? (
+            <View style={{ marginTop: 100 }}>
+              <Card
+                title="PROPERTIES PAGE"
+                image={require("../assets/property.jpg")}
+              >
+                <Text style={{ marginBottom: 10, textAlign: "center" }}>
+                  No properties added yet please go to add properties
+                </Text>
+                <Button
+                  buttonStyle={{
+                    borderRadius: 0,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    marginBottom: 0
+                  }}
+                  onPress={() => this.props.navigation.navigate("add_property")}
+                  title="ADD PROPERTY"
+                />
+              </Card>
+            </View>
+          ) : (
+            properties.map(property => (
+              <View key={property.id}>
+                <TouchableOpacity
+                  onPress={() =>
+                    this.props.navigation.navigate("view_property", {
+                      property
+                    })
+                  }
+                  style={styles.pCard}
+                >
+                  <Image
+                    style={styles.image}
+                    source={require("../assets/pimage.png")}
+                  />
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 22,
+                      fontWeight: "bold"
+                    }}
+                  >
+                    {property.property_type}
+                  </Text>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 15,
+                      fontWeight: "200",
+                      overflow: "scroll"
+                    }}
+                  >
+                    {property.address}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* <Button
+                  buttonStyle={{
+                    borderRadius: 0,
+                    marginLeft: 0,
+                    marginRight: 0,
+                    marginBottom: 0
+                  }}
+                  onPress={() => this.props.navigation.navigate("message")}
+                  title="MESSAGE"
+                /> */}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  home: {
-    width: width,    
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white"
   },
-  search: {
-    height: 48,
-    width: width - 32,
-    marginHorizontal: 16,
-    borderWidth: 1,
-    borderRadius: 3,
+  pCard: {
+    width: 300,
+    height: 220,
+    marginTop: 50,
+    backgroundColor: "white",
+    elevation: 10
   },
-  header: {
-    backgroundColor: theme.COLORS.WHITE,
-    shadowColor: theme.COLORS.BLACK,
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowRadius: 8,
-    shadowOpacity: 0.2,
-    elevation: 4,
-    zIndex: 2,
-  },
-  tabs: {
-    marginBottom: 24,
-    marginTop: 10,
-    elevation: 4,
-  },
-  tab: {
-    backgroundColor: theme.COLORS.TRANSPARENT,
-    width: width * 0.50,
-    borderRadius: 0,
-    borderWidth: 0,
-    height: 24,
-    elevation: 0,
-  },
-  tabTitle: {
-    lineHeight: 19,
-    fontWeight: '300'
-  },
-  divider: {
-    borderRightWidth: 0.3,
-    borderRightColor: theme.COLORS.MUTED,
-  },
-  products: {
-    width: width - theme.SIZES.BASE * 2,
-    paddingVertical: theme.SIZES.BASE * 2,
-  },
+  image: {
+    width: 300,
+    height: 170
+  }
 });
